@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
@@ -17,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import zielu.gittoolbox.ResBundle;
+import zielu.gittoolbox.compat.Notifier;
 import zielu.gittoolbox.tag.GitTagsPusher;
 import zielu.gittoolbox.tag.TagsPushSpec;
 import zielu.gittoolbox.ui.GitPushTagsDialog;
@@ -53,14 +53,14 @@ public class GitPushTagsAction extends GitRepositoryAction {
 
     private void handleResult(Project project, GitSimplePushResult result) {
         if (result.getType() == Type.SUCCESS) {
-            VcsNotifier.getInstance(project).notifySuccess(ResBundle.getString("message.tags.pushed"));
+            Notifier.getInstance(project).notifySuccess(ResBundle.getString("message.tags.pushed"));
         } else if (EnumSet.of(Type.ERROR, Type.REJECT, Type.NOT_AUTHORIZED).contains(result.getType())) {
             showError(project, result);
         }
     }
 
     private void showError(Project project, GitSimplePushResult result) {
-        VcsNotifier notifier = VcsNotifier.getInstance(project);
+        Notifier notifier = Notifier.getInstance(project);
         switch (result.getType()) {
             case ERROR: {
                 notifier.notifyError("Push failed", result.getOutput());

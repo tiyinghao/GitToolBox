@@ -2,12 +2,10 @@ package zielu.gittoolbox.tag;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
@@ -20,17 +18,18 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import zielu.gittoolbox.ResBundle;
+import zielu.gittoolbox.compat.GtGit;
 import zielu.gittoolbox.push.GitPushRejectedDetector;
 
 public class GitTagsPusher {
     private final Project myProject;
     private final ProgressIndicator myProgress;
-    private final Git myGit;
+    private final GtGit myGit;
 
     private GitTagsPusher(Project project, ProgressIndicator progress) {
         myProject = project;
         myProgress = progress;
-        myGit = ServiceManager.getService(Git.class);
+        myGit = GtGit.getInstance(project);
     }
 
     public static GitTagsPusher create(@NotNull Project project, @NotNull ProgressIndicator progress) {
@@ -85,8 +84,6 @@ public class GitTagsPusher {
     private GitSimplePushResult translate(GitCommandResult result) {
         if (result.success()) {
             return GitSimplePushResult.success();
-        } else if (result.cancelled()) {
-            return GitSimplePushResult.cancel();
         } else {
             return GitSimplePushResult.error(result.getErrorOutputAsJoinedString());
         }
