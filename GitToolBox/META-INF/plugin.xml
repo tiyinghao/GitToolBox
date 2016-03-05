@@ -1,26 +1,56 @@
 <idea-plugin version="2" url="https://github.com/zielu/GitToolBox">
   <id>zielu.gittoolbox</id>
   <name>GitToolBox</name>
-  <version>13.1.1</version>
+  <version>13.1.2</version>
   <vendor url="https://github.com/zielu/GitToolBox">Łukasz Zieliński</vendor>
 
   <description><![CDATA[
-    <h2>Enriches Git integration</h2>
-    Following functionality was added:
+    <h2>Enriches Git Integration with additional features</h2>
+    <div>
+      <a href="https://plugins.jetbrains.com/plugin/7499?pr=idea_ce">[Home]</a>
+      <a href="https://github.com/zielu/GitToolBox/issues">[Issues]</a>
+    </div><br/>
+    <h2>Features</h2>
     <ul>
-      <li><b>Additional VCS -> Git menu actions:</b>
+      <li><b>Git status display</b> -
+        shows number of ahead / behind commits for current branch as status bar widget
+        and Project View decoration on modules.
+      </li>
+      <li><b>Auto fetch</b> -
+        runs git fetch at fixed intervals
+      </li>
+      <li><b>Push tags on current branch</b> -
+        available in VCS / Git
+      </li>
+      <li><b>Behind tracker</b> -
+        shows notification when behind count of current branch changes and is non-zero
+      </li>
+    </ul>
+    <h2>Configuration</h2>
+    Settings / Other Settings / Git ToolBox
+    <ul>
+      <li><b>Git status display</b>
         <ul>
-          <li>'Push tags on branch' - pushes selected tags for current branch</li>
-          <li>'Fetch and show behind' - fetches from remote and displays number of commits that current branch is behind</li>
+          <li>status bar and Project View can be toggled independently</li>
+          <li>3 presentation modes: arrows, arrow-heads, text</li>
         </ul>
+      </li>
+      <li><b>Auto fetch</b> -
+        toggle and interval (in minutes)
+      <li><b>Behind tracker</b> -
+        toggle
       </li>
     </ul>
     ]]></description>
 
   <change-notes><![CDATA[
-      <h3>Changes is 13.1.1</h3>
+      <h3>Changes is 13.5.4</h3>
       <ul>
-        <li>Recompiled with 1.6 compatibility (<a href="https://github.com/zielu/GitToolBox/issues/2">issue 2</a>)</li>
+        <li>Fixed NullPointer during auto-fetch</li>
+      </ul>
+      <h3>Changes is 13.1.2</h3>
+      <ul>
+        <li>Back-ported all features and fixes from 13.5</li>
       </ul>
       <h3>Changes is 13.0.2</h3>
       <ul>
@@ -41,21 +71,34 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
+    <applicationService serviceImplementation="zielu.gittoolbox.GitToolBoxConfig"/>
+    <applicationService serviceImplementation="zielu.gittoolbox.ui.StatusMessages"/>
+    <applicationConfigurable instance="zielu.gittoolbox.ui.config.GitToolBoxConfigurable" id="zielu.svntoolbox.app.config" />
+    <projectViewNodeDecorator implementation="zielu.gittoolbox.ui.projectView.GitProjectViewDecorator"/>
   </extensions>
 
   <application-components>
-    <!-- Add your application components here -->
+    <component>
+      <implementation-class>zielu.gittoolbox.GitToolBoxApp</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
     <!-- Add your project components here -->
+    <component>
+      <implementation-class>zielu.gittoolbox.GitToolBoxProject</implementation-class>
+    </component>
+    <component>
+      <implementation-class>zielu.gittoolbox.status.BehindTracker</implementation-class>
+    </component>
+    <!--
+    <component>
+      <implementation-class>zielu.gittoolbox.repo.GtRepositoryManager</implementation-class>
+    </component>
+    -->
   </project-components>
 
   <actions>
-    <action class="zielu.gittoolbox.actions.GitFetchAndShowStatusAction" id="GitToolBox.FetchAndStatus"
-            text="Fetch and show behind">
-      <add-to-group group-id="GitRepositoryActions" anchor="after" relative-to-action="Git.Fetch"/>
-    </action>
     <action class="zielu.gittoolbox.actions.GitPushTagsAction" id="GitToolBox.PushTags"
             text="Push tags on branch...">
       <add-to-group group-id="GitRepositoryActions" anchor="after" relative-to-action="Git.Push"/>

@@ -2,7 +2,8 @@ package zielu.gittoolbox.status;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import git4idea.GitLocalBranch;
@@ -14,7 +15,7 @@ import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,42 +32,41 @@ public class GitStatusCalculator {
         return new GitStatusCalculator(project, indicator);
     }
 
-    public List<GitAheadBehindStatus> aheadBehindStatus(Collection<GitRepository> repositories) {
-        List<GitAheadBehindStatus> result = Lists.newArrayListWithCapacity(repositories.size());
+    public static GitStatusCalculator create(@NotNull Project project) {
+        return create(project, new EmptyProgressIndicator());
+    }
+
+    public Map<GitRepository, RevListCount> behindStatus(Collection<GitRepository> repositories){
+        Map<GitRepository, RevListCount> result = Maps.newLinkedHashMap();
         for (GitRepository repository : repositories){
-            result.add(aheadBehindStatus(repository));
+            result.put(repository, behindStatus(repository));
         }
         return result;
     }
 
-    public List<Integer> behindStatus(Collection<GitRepository> repositories){
-        List<Integer> result = Lists.newArrayListWithCapacity(repositories.size());
-        for (GitRepository repository : repositories){
-            result.add(behindStatus(repository));
-        }
-        return result;
-    }
-
-    private int behindStatus(GitRepository repository) {
+    @NotNull
+    public RevListCount behindStatus(GitRepository repository) {
         Optional<GitBranchTrackInfo> trackInfo = trackInfoForCurrentBranch(repository);
         if (trackInfo.isPresent()) {
             return behindStatus(repository.getCurrentBranch(), trackInfo.get(), repository);
         }
-        return 0;
+        return RevListCount.noRemote();
     }
 
-    private GitAheadBehindStatus aheadBehindStatus(GitRepository repository) {
+    @NotNull
+    public GitAheadBehindCount aheadBehindStatus(GitRepository repository) {
         Optional<GitBranchTrackInfo> trackInfo = trackInfoForCurrentBranch(repository);
         if (trackInfo.isPresent()) {
             return aheadBehindStatus(repository.getCurrentBranch(), trackInfo.get(), repository);
         }
-        return GitAheadBehindStatus.empty();
+        return GitAheadBehindCount.noRemote();
     }
 
-    private int behindStatus(GitLocalBranch currentBranch, GitBranchTrackInfo trackInfo, GitRepository repository) {
+    private RevListCount behindStatus(GitLocalBranch currentBranch, GitBranchTrackInfo trackInfo, GitRepository repository) {
         String localName = currentBranch.getName();
         String remoteName = trackInfo.getRemoteBranch().getNameForLocalOperations();
-        return behindCount(localName, remoteName, repository);
+        GitAheadBehindCount count = doRevListLeftRight(localName, remoteName, repository);
+        return count.behind;
     }
 
     private Optional<GitBranchTrackInfo> trackInfoForCurrentBranch(GitRepository repository) {
@@ -74,47 +74,39 @@ public class GitStatusCalculator {
         return Optional.fromNullable(trackInfo);
     }
 
-    private GitAheadBehindStatus aheadBehindStatus(
+    private GitAheadBehindCount aheadBehindStatus(
         GitLocalBranch localBranch, GitBranchTrackInfo trackInfo, GitRepository repository) {
         String localName = localBranch.getName();
         String remoteName = trackInfo.getRemoteBranch().getNameForLocalOperations();
-        int behind = behindCount(localName, remoteName, repository);
-        int ahead = aheadCount(localName, remoteName, repository);
-        return GitAheadBehindStatus.create(ahead, behind);
+        return doRevListLeftRight(localName, remoteName, repository);
     }
 
-    private int behindCount(String localName, String remoteName, GitRepository repository) {
-        return doRevListCount(localName+".."+remoteName, repository);
-    }
-
-    private int aheadCount(String localName, String remoteName, GitRepository repository) {
-        return doRevListCount(remoteName+".."+localName, repository);
-    }
-
-    private int doRevListCount(String branches, GitRepository repository) {
+    @NotNull
+    private GitAheadBehindCount doRevListLeftRight(String localName, String remoteName, GitRepository repository) {
+        String branches = localName + "..." + remoteName;
         final GitLineHandler handler = new GitLineHandler(myProject, repository.getRoot(), GitCommand.REV_LIST);
-        handler.addParameters(branches, "--count");
-        final GitRevListCounter counter = new GitRevListCounter();
+        handler.addParameters(branches, "--left-right");
+        final GitRevListLeftRightCounter counter = new GitRevListLeftRightCounter();
         handler.addLineListener(counter);
         GitTask task = new GitTask(myProject, handler, branches);
         task.setProgressIndicator(myIndicator);
-        final AtomicReference<Integer> result = new AtomicReference<Integer>();
+        final AtomicReference<GitAheadBehindCount> result = new AtomicReference<GitAheadBehindCount>();
         task.execute(true, false, new GitTaskResultHandlerAdapter() {
             @Override
             protected void onSuccess() {
-                result.set(counter.count());
+                result.set(GitAheadBehindCount.success(counter.ahead(), counter.behind()));
             }
 
             @Override
             protected void onCancel() {
-                result.set(-1);
+                result.set(GitAheadBehindCount.cancel());
             }
 
             @Override
             protected void onFailure() {
-                result.set(-1);
+                result.set(GitAheadBehindCount.failure());
             }
         });
-        return result.get();
+        return Preconditions.checkNotNull(result.get(), "Null rev list left right");
     }
 }
