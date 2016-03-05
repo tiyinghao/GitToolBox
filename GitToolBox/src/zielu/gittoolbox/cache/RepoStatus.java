@@ -30,7 +30,9 @@ public class RepoStatus {
         if (branch != null) {
             localHash = branch.getHash();
             remote = branch.findTrackedBranch(repository);
-            remoteHash = remote.getHash();
+            if (remote != null) {
+                remoteHash = remote.getHash();
+            }
         }
         return new RepoStatus(branch, localHash, remote, remoteHash);
     }
