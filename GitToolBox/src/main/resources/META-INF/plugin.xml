@@ -136,6 +136,9 @@
     <component>
       <implementation-class>zielu.gittoolbox.status.BehindTracker</implementation-class>
     </component>
+    <component>
+      <implementation-class>zielu.gittoolbox.compat.RepositoryManager</implementation-class>
+    </component>
     <!--
     <component>
       <implementation-class>zielu.gittoolbox.repo.GtRepositoryManager</implementation-class>

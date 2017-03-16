@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import zielu.gittoolbox.GitToolBoxConfig;
 import zielu.gittoolbox.GitToolBoxProject;
 import zielu.gittoolbox.cache.PerRepoInfoCache;
-import zielu.gittoolbox.repo.GtRepositoryManager;
+import zielu.gittoolbox.compat.RepositoryManager;
 import zielu.gittoolbox.status.GitAheadBehindCount;
 import zielu.gittoolbox.util.LogWatch;
 
@@ -60,7 +60,7 @@ public class ProjectViewDecorator implements ProjectViewNodeDecorator {
 
     @Nullable
     private GitRepository getRepoForFile(@NotNull Project project, @NotNull VirtualFile file) {
-        return GtRepositoryManager.getInstance(project).getRepositoryForFile(project, file);
+        return RepositoryManager.getInstance(project).getRepositoryForFile(project, file);
     }
 
     private void applyDecoration(Project project, GitRepository repo, ProjectViewNode projectViewNode, PresentationData presentation) {
