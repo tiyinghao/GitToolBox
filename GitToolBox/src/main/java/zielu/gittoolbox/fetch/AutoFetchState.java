@@ -45,6 +45,9 @@ public class AutoFetchState extends AbstractProjectComponent {
         });
         myConnection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
             @Override
+            public void beforeBuildProcessStarted(Project project, UUID sessionId) {}
+
+            @Override
             public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
                 LOG.debug("Build start");
                 if (myProject.equals(project)) {
