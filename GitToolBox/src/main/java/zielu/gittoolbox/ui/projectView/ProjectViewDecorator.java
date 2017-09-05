@@ -14,7 +14,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nullable;
-import zielu.gittoolbox.GitToolBoxConfig;
+import zielu.gittoolbox.config.GitToolBoxConfig;
 import zielu.gittoolbox.GitToolBoxProject;
 import zielu.gittoolbox.cache.PerRepoInfoCache;
 import zielu.gittoolbox.status.GitAheadBehindCount;
