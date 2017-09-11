@@ -11,7 +11,7 @@ import java.util.Objects;
 import zielu.gittoolbox.extension.UpdateProjectAction;
 import zielu.gittoolbox.extension.UpdateProjectActionEP;
 
-public class GitToolBoxUpdateProjectApp implements ApplicationComponent {
+public class GitToolBoxUpdateProjectApp extends ApplicationComponent.Adapter {
     private UpdateProjectAction myDefaultAction;
     private final List<UpdateProjectAction> myUpdateActions = new ArrayList<>();
 
